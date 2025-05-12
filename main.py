@@ -4,11 +4,22 @@ from aiohttp import web
 import os
 import logging
 
-from info import API_ID, API_HASH, BOT_TOKEN
-from commands import register_handlers
+# Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# Env vars
+API_ID = int(os.environ.get("API_ID"))
+API_HASH = os.environ.get("API_HASH")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
+# Pyrogram client
 app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# Import handlers so they get registered
+import commands
+
+# Health check route
 async def handle(request):
     return web.Response(text="Bot is running")
 
@@ -19,14 +30,17 @@ async def run_web():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", 8000)
     await site.start()
+    logger.info("Health check server running at port 8000")
 
-async def main():
+# Start everything
+async def startup():
     await run_web()
     await app.start()
-    register_handlers(app)
-    print("Bot started.")
+    logger.info("Bot started.")
     await idle()
+    logger.info("Stopping bot...")
     await app.stop()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(startup())
