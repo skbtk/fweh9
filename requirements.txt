@@ -4,3 +4,4 @@ httpx
 selectolax
 motor
 aiohttp
+flask
