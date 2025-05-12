@@ -1,11 +1,15 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 from info import MONGODB_URL
 
-client = AsyncIOMotorClient(MONGODB_URL)
-db = client.scraperbot
-channel_collection = db.channels
+client = MongoClient(MONGODB_URL)
+db = client.bot_db
+channels_col = db.channels
 
-async def get_channels(add=None):
-    if add:
-        await channel_collection.update_one({"chat_id": add}, {"$set": {"chat_id": add}}, upsert=True)
-    return await channel_collection.distinct("chat_id")
+def add_channel(chat_id):
+    channels_col.update_one({"chat_id": chat_id}, {"$set": {"chat_id": chat_id}}, upsert=True)
+
+def remove_channel(chat_id):
+    channels_col.delete_one({"chat_id": chat_id})
+
+def get_channels():
+    return [x["chat_id"] for x in channels_col.find()]
