@@ -1,9 +1,8 @@
 from pyrogram import filters
 from pyrogram.types import Message
 from script import extract_links
-from database import (
-    set_channel, get_channels, remove_channel, upload_links
-)
+from info import UPLOAD_CHANNEL
+from script import upload_links_to_channel
 
 def register_handlers(app):
 
@@ -13,14 +12,7 @@ def register_handlers(app):
 
     @app.on_message(filters.command("status") & filters.private)
     async def status_handler(client, message: Message):
-        channels = await get_channels()
-        if not channels:
-            await message.reply("❌ No channels set yet.")
-        else:
-            reply = "📢 Current set channels:\n"
-            for ch in channels:
-                reply += f"➤ `{ch}`\n"
-            await message.reply(reply)
+        await message.reply(f"📢 Uploading to channel: `{UPLOAD_CHANNEL}`")
 
     @app.on_message(filters.command("scrape_filmyfly") & filters.private)
     async def scrape_filmyfly_handler(client, message: Message):
@@ -34,25 +26,9 @@ def register_handlers(app):
         if not links:
             return await message.reply("❌ No links found.")
 
-        await upload_links(links)
-        await message.reply(f"✅ Uploaded {len(links)} links to the set channels.")
+        await upload_links_to_channel(app, UPLOAD_CHANNEL, links)
+        await message.reply(f"✅ Uploaded {len(links)} links to the channel.")
 
     @app.on_message(filters.command("scrape_tamilblasters") & filters.private)
     async def scrape_tamilblasters_handler(client, message: Message):
         await message.reply("🔄 TamilBlasters scraping coming soon or under development.")
-
-    @app.on_message(filters.command("setchannel") & filters.private)
-    async def setchannel_handler(client, message: Message):
-        if len(message.command) < 2:
-            return await message.reply("❗ Send a channel ID.\n\n`/setchannel <channel_id>`")
-        channel_id = int(message.command[1])
-        await set_channel(channel_id)
-        await message.reply(f"✅ Channel `{channel_id}` added.")
-
-    @app.on_message(filters.command("delchannel") & filters.private)
-    async def delchannel_handler(client, message: Message):
-        if len(message.command) < 2:
-            return await message.reply("❗ Send a channel ID.\n\n`/delchannel <channel_id>`")
-        channel_id = int(message.command[1])
-        await remove_channel(channel_id)
-        await message.reply(f"🗑️ Channel `{channel_id}` removed.")
